@@ -1,33 +1,36 @@
+require('dotenv/config');
 
-require('dotenv').config();
+const { Client } = require('discord.js'); 
+const { default: OpenAI } = require('openai');
 
-const {Client, IntentsBitField} = require('discord.js');
-const client = new Client({
-    intents: [
-        IntentsBitField.Flags.Guilds, 
-        IntentsBitField.Flags.GuildMembers,
-        IntentsBitField.Flags.GuildMessages,
-        IntentsBitField.Flags.MessageContent,
-    ]
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY, 
 }); 
+
+const client = new Client({
+    intents: ['Guilds', 'GuildMembers', 'GuildMessages', 'MessageContent'],})
 
 client.on('ready', (c) => {
     console.log(`${c.user.username} menyala abangkuh`);
 })
 
-client.on('messageCreate', (msg) => {
-    if(msg.author.bot){
-        return; 
-    }
-    console.log(msg.channel.id)
-    if(msg.content === 'hai'){
-        msg.reply('hai');
-    }
-
-    if(msg.content === 'oke gas'){
-        msg.reply('https://www.youtube.com/shorts/QRghT9jPHck'); 
-    }
+client.on('messageCreate', async (message) => {
+    const response = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo', 
+        messages: [
+            {
+                role: 'system',
+                content: 'YOU ARE A POSH CHATBOT.'
+            },
+            {
+                role: 'user',
+                content: message.content,
+            }
+        ]
+    }).catch((error) => console.error('OPENAI Error:\n', error)); 
+    message.reply(response.choices[0].message.content);
 })
+
 
 client.on('interactionCreate', (interaction) => {
     if(!interaction.isChatInputCommand()) return; 
